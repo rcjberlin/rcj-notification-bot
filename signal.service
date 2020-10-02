@@ -1,0 +1,23 @@
+[Unit]
+Description=matrix-puppet-signal
+After=matrix-synapse.service
+
+[Service]
+Type=simple
+WorkingDirectory=/home/rcj/matrix-puppet-signal
+ExecStart=node /home/rcj/matrix-puppet-signal/index.js
+
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=matrix-puppet-signal
+
+PermissionsStartOnly=true
+LimitNOFILE=4096
+IgnoreSIGPIPE=false
+User=rcj
+
+[Install]
+WantedBy=multi-user.target
+
