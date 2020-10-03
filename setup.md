@@ -1,9 +1,3 @@
-# Installation
-
-```bash
-npm install
-```
-
 # Setup
 
 Set environmental variables in `.env` file:
@@ -17,9 +11,7 @@ TELEGRAM_ADMIN_USERNAMES = ["nikolockenvitz"]
 # Run
 
 ```bash
-ts-node index.ts
-# or
-npm run start
+python main.py
 ```
 
 # Matrix
