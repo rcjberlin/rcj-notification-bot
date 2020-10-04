@@ -20,7 +20,11 @@ Stopping script gracefully
     To circumvent this, the code below invokes the .stop() method of all bots.
     Each bot can implement the necessary steps there to stop gracefully.
 """
+stopping = False
 def signal_handler(sig, frame):
+    global stopping
+    if stopping: return
+    stopping = True
     print("Stopping...")
     botManager.stop()
     sys.exit(0)
