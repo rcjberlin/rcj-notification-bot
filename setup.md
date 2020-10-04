@@ -16,6 +16,7 @@ Set environmental variables in `.env` file:
 # .env
 TELEGRAM_BOT_TOKEN = 1234567890:abcdefghij-123-klmnopqrstuvwxyz
 TELEGRAM_ADMIN_USERNAMES = ["nikolockenvitz"]
+TELEGRAM_USER_IDS_NOTIFY_ON_ERROR = [123456789]
 ```
 
 # Run
