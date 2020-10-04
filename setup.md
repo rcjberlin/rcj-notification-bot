@@ -1,3 +1,13 @@
+# Installation
+
+```bash
+# Required
+$ pip install python-telegram-bot
+
+# Optional
+$ pip install ujson
+```
+
 # Setup
 
 Set environmental variables in `.env` file:
@@ -11,7 +21,7 @@ TELEGRAM_ADMIN_USERNAMES = ["nikolockenvitz"]
 # Run
 
 ```bash
-python main.py
+$ python main.py
 ```
 
 # Matrix

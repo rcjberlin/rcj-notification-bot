@@ -16,3 +16,9 @@ class BotManager:
 			numberOfChats += bot.sendMessageToChannels(message, channels)
 		return numberOfChats
 
+	def stop(self):
+		for bot in self.bots:
+			try:
+				bot.stop()
+			except:
+				pass
