@@ -33,3 +33,5 @@
   * Web App or similar for admins to send messages to certain channels
 * Schedule
   * provides information about schedule (which team, what time, which arena)
+
+![Architecture of rcj-notification-bot](./docs/bot-architecture.svg)
