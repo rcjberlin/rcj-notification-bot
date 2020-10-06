@@ -11,7 +11,6 @@ const INTERNAL_PORT = config.botmanager.INTERNAL_PORT;
 const EXTERNAL_PORT = config.botmanager.EXTERNAL_PORT;
 
 const EXTERNAL_ACCEPTED_TOKENS = config.botmanager.TOKENS;
-const INTERNAL_ACCEPTED_TOKENS = Object.keys(config.bots).map((bot) => config.bots[bot].TOKEN);
 
 const TOKEN_TYPE = "Bearer";
 app.use((req, res, next) => {

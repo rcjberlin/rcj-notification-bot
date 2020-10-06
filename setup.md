@@ -21,7 +21,6 @@ Configure all services in `config.json`.
     "bots": {
         "telegram": {
             "INTERNAL_PORT": 41402,
-            "TOKEN": "some-random-token-to-authenticate-this-service-2",
             "TELEGRAM_BOT_TOKEN": "1234567890:abcdefghij-123-klmnopqrstuvwxyz",
             "TELEGRAM_ADMIN_USERNAMES": [
                 "nikolockenvitz"
@@ -31,8 +30,7 @@ Configure all services in `config.json`.
             ]
         },
         "matrix": {
-            "INTERNAL_PORT": 41403,
-            "TOKEN": "some-random-token-to-authenticate-this-service-3"
+            "INTERNAL_PORT": 41403
         }
     }
 }
