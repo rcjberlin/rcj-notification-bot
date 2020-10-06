@@ -1,28 +1,47 @@
 # Installation
 
 ```bash
-# Required
-$ pip install python-telegram-bot
-
-# Optional
-$ pip install ujson
+# todo
 ```
 
 # Setup
 
-Set environmental variables in `.env` file:
+Configure all services in `config.json`.
 
-```bash
-# .env
-TELEGRAM_BOT_TOKEN = 1234567890:abcdefghij-123-klmnopqrstuvwxyz
-TELEGRAM_ADMIN_USERNAMES = ["nikolockenvitz"]
-TELEGRAM_USER_IDS_NOTIFY_ON_ERROR = [123456789]
+```json
+{
+    "botmanager": {
+        "INTERNAL_PORT": 41401,
+        "EXTERNAL_PORT": 1337,
+        "TOKENS": [
+            "token-to-authenticate-requests-from-rcj-server",
+            "token-to-authenticate-requests-from-admin-dashboard"
+        ]
+    },
+    "bots": {
+        "telegram": {
+            "INTERNAL_PORT": 41402,
+            "TOKEN": "some-random-token-to-authenticate-this-service-2",
+            "TELEGRAM_BOT_TOKEN": "1234567890:abcdefghij-123-klmnopqrstuvwxyz",
+            "TELEGRAM_ADMIN_USERNAMES": [
+                "nikolockenvitz"
+            ],
+            "TELEGRAM_USER_IDS_NOTIFY_ON_ERROR": [
+                123456789
+            ]
+        },
+        "matrix": {
+            "INTERNAL_PORT": 41403,
+            "TOKEN": "some-random-token-to-authenticate-this-service-3"
+        }
+    }
+}
 ```
 
 # Run
 
 ```bash
-$ python main.py
+# todo
 ```
 
 # Matrix
