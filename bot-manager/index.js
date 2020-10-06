@@ -27,7 +27,10 @@ app.use((req, res, next) => {
       throw new Error("");
     }
   } catch {
-    return res.status(401).send("Unauthorized");
+    return res.status(401).json({
+      successful: false,
+      message: "Unauthorized",
+    });
   }
 });
 
