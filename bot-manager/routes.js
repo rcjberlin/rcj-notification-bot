@@ -1,5 +1,9 @@
+const config = require("./utils/config");
+
 const express = require("express");
 const router = express.Router();
+
+const request = require("./utils/request");
 
 router.get("/", (req, res) => {
   res.json({
@@ -18,12 +22,28 @@ router.get("/v1/channels", (req, res) => {
   });
 });
 
-router.post("/v1/send", (req, res) => {
-  // TODO: send request to all bots (promise.all) + sum number of notified users per bot
+router.post("/v1/send", async (req, res) => {
+  const responses = await Promise.all(
+    Object.keys(config.bots).map((bot) => request("POST", `http://localhost:${config.bots[bot].INTERNAL_PORT}/v1/send`, {}, req.body))
+  );
+
+  let users = 0;
+  for (let i = 0; i < config.bots.length; i++) {
+    if (responses[i].status !== 200) {
+      // TODO: retry later, bot is probably only down for some time
+      // TODO: alert admins (via bots?)
+    }
+    try {
+      users += responses.json.data.users;
+    } catch {
+      // TODO
+    }
+  }
+
   res.json({
     successful: true,
     data: {
-      users: 0,
+      users,
     },
   });
 });
