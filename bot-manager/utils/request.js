@@ -13,7 +13,10 @@ module.exports = async function (method, url, headers, body) {
   try {
     const response = await fetch(url, {
       method,
-      ...(headers ? { headers } : {}),
+      headers: {
+        "Content-Type": "application/json",
+        ...(headers ? headers : {}),
+      },
       ...(body ? { body: JSON.stringify(body) } : {}),
     });
     result.status = response.status;
