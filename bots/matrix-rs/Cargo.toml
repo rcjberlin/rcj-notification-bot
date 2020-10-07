@@ -1,0 +1,17 @@
+[package]
+name = "rcj-notification-bot"
+version = "0.1.0"
+authors = ["Manuel Bucher <dev@manuelbucher.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+structopt = "0.3"
+matrix-sdk = "0.1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+url = "2.1.1"
+xdg = "^2.1"
+tokio = { version = "0.2.22", features = ["rt-threaded", "macros"] }
+async-trait = "0.1"

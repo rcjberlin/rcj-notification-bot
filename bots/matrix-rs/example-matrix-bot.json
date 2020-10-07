@@ -1,0 +1,9 @@
+{
+	"homeserver": "http://localhost:8008",
+	"user":
+	{
+		"user_id": "@bot:example.com",
+		"device_id": "ZCXBJMBVWM",
+		"access_token": "..."
+	}
+}
