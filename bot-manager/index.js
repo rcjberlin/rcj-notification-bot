@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.json());
 
 const routes = require("./routes");
+const middleware = require("./utils/middleware");
 
 const INTERNAL_PORT = config.botmanager.INTERNAL_PORT;
 const EXTERNAL_PORT = config.botmanager.EXTERNAL_PORT;
@@ -35,19 +36,8 @@ app.use((req, res, next) => {
 
 app.use(routes);
 
-app.use((req, res, next) => {
-  res.status(404).json({
-    successful: false,
-    message: `Cannot ${req.method} ${req.originalUrl}`,
-  });
-});
-app.use((err, req, res, next) => {
-  console.error(err);
-  res.status(500).json({
-    successful: false,
-    message: "Internal Server Error",
-  });
-});
+app.use(middleware.routeNotFound);
+app.use(middleware.internalServerError);
 
 app.listen(INTERNAL_PORT, () => {
   console.log(`Bot Manager listening at internal port http://localhost:${INTERNAL_PORT}`);
