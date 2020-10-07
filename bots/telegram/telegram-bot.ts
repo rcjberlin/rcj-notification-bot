@@ -53,6 +53,13 @@ class TelegramBot {
     });
   }
 
+  sendMessageToChannels(message: string, channels: any[]): number {
+    let numberOfChats = 0;
+    console.log("TODO: send message to channels", { message, channels });
+    // TODO: loop through all chats and check whether at least one channels matches with the subscribed ones
+    return numberOfChats;
+  }
+
   private registerAdminCommands() {
     for (const command in adminCommandHandlers) {
       const argsHelpText = adminCommandHandlers[command].args.map((arg) => " <" + arg + ">").join("");

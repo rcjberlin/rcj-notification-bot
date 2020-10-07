@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 
+import { bot } from "./telegram-bot";
+
 router.get("/", (req, res) => {
   res.json({
     successful: true,
@@ -8,12 +10,12 @@ router.get("/", (req, res) => {
 });
 
 router.post("/v1/send", async (req, res) => {
-  // TODO: forward to telegram bot instance
+  const users = bot.sendMessageToChannels(req.body.message, req.body.channelIds);
 
   res.json({
-    successful: false,
+    successful: true,
     data: {
-      users: 0,
+      users,
     },
   });
 });
