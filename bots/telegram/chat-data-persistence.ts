@@ -36,3 +36,19 @@ function _writeChatDataToFile() {
 function cloneObject(obj: Object): Object {
   return JSON.parse(JSON.stringify(obj));
 }
+
+export function getChatIdsThatSubscribedOneOfChannelIds(channelIds: Array<Number | String>): Array<Number | String> {
+  const chatIds = [];
+  channelIds = channelIds.map((channelId) => channelId.toString());
+  for (const chatId in CHAT_DATA) {
+    if (CHAT_DATA[chatId].channelIds) {
+      for (const subsribedChannel of CHAT_DATA[chatId].channelIds) {
+        if (channelIds.includes(subsribedChannel)) {
+          chatIds.push(chatId);
+          break;
+        }
+      }
+    }
+  }
+  return chatIds;
+}

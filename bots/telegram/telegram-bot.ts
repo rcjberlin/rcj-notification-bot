@@ -4,6 +4,8 @@ import { Telegraf } from "telegraf";
 import * as middleware from "./bot-middleware";
 import * as inlineKeyboard from "./inline-keyboard";
 import { adminCommandHandlers } from "./admin-commands";
+import { getChatIdsThatSubscribedOneOfChannelIds } from "./chat-data-persistence";
+import channels = require("../../bot-manager/utils/channels");
 
 const HELP_TEXT = `Hello, this Telegram Bot will send notifications to different channels. You can subscribe the channels relevant for you by listing all channels with /channels and then select the ones you want. Click again to unsubscribe.
 To view only a list of channels you subscribed to, use /mychannels.
@@ -63,11 +65,12 @@ class TelegramBot {
     });
   }
 
-  sendMessageToChannels(message: string, channels: any[]): number {
-    let numberOfChats = 0;
-    console.log("TODO: send message to channels", { message, channels });
-    // TODO: loop through all chats and check whether at least one channels matches with the subscribed ones
-    return numberOfChats;
+  sendMessageToChannels(message: string, channelIds: Array<Number | String>): number {
+    const chatIds = getChatIdsThatSubscribedOneOfChannelIds(channelIds);
+    for (const chatId of chatIds) {
+      this.bot.telegram.sendMessage(chatId, message);
+    }
+    return chatIds.length;
   }
 
   private registerAdminCommands() {
