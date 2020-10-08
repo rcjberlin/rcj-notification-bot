@@ -1,4 +1,3 @@
-import { format } from "path";
 import config = require("../../bot-manager/utils/config");
 
 export * from "./chat-data-persistence";

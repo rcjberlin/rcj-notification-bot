@@ -3,6 +3,7 @@ import channels = require("../../bot-manager/utils/channels");
 
 import { Telegraf } from "telegraf";
 import * as middleware from "./bot-middleware";
+import * as inlineKeyboard from "./inline-keyboard";
 import { adminCommandHandlers } from "./admin-commands";
 
 const HELP_TEXT = `Hello, this Telegram Bot will send notifications to different channels. You can subscribe the channels relevant for you by listing all channels with /channels and then select the ones you want. Click again to unsubscribe.
@@ -19,14 +20,23 @@ class TelegramBot {
 
     this.bot.use(middleware.setIsAdmin);
     this.bot.use(middleware.chatDataPersistence);
-    // TODO: inline keyboard callbacks
     this.registerAdminCommands();
+    this.registerInlineKeyboardCallbackHandler();
 
     this.bot.command("/channels", async (ctx) => {
-      ctx.replyWithMarkdown("This command is not yet implemented");
+      ctx.reply("Channels:", inlineKeyboard.channelsForChatAsReplyMarkup(channels, ctx.chat_data.channelIds || []));
     });
     this.bot.command("/mychannels", async (ctx) => {
-      ctx.replyWithMarkdown("This command is not yet implemented");
+      if (!ctx.chat_data.channelIds || ctx.chat_data.channelIds.length === 0) {
+        ctx.reply("You don't have any subscribed channels yet. List all /channels and add one.");
+      } else {
+        ctx.reply(
+          "Your Channels:",
+          inlineKeyboard.channelsForChatAsReplyMarkup(channels, ctx.chat_data.channelIds, {
+            onlySubscribedChannels: true,
+          })
+        );
+      }
     });
 
     this.bot.telegram.setMyCommands([
@@ -77,10 +87,33 @@ class TelegramBot {
     });
   }
 
+  private registerInlineKeyboardCallbackHandler() {
+    for (const inlineKeyboardCommandHandler of inlineKeyboard.inlineKeyboardCommandHandlers) {
+      this.bot.action(inlineKeyboardCommandHandler.regex, (ctx, next) => {
+        const callbackData = ctx.update.callback_query.data;
+        const regexMatch = inlineKeyboardCommandHandler.regex.exec(callbackData);
+        if (regexMatch === null) {
+          this.notifyDevelopersAboutError(
+            `Failed to get matches for callback data ${callbackData} using regex ${inlineKeyboardCommandHandler.regex}`
+          );
+          return next();
+        }
+        inlineKeyboardCommandHandler.handler(ctx, callbackData, regexMatch.slice(1), { channels });
+        next();
+      });
+    }
+  }
+
   private async sendHelp(ctx) {
     await ctx.replyWithMarkdown(HELP_TEXT);
     if (ctx.is_admin && this.HELP_TEXT_ADMIN) {
       ctx.replyWithMarkdown(this.HELP_TEXT_ADMIN);
+    }
+  }
+
+  private notifyDevelopersAboutError(message: string): void {
+    for (const chatId of config.bots.telegram.TELEGRAM_CHAT_IDS_NOTIFY_ON_ERROR) {
+      this.bot.telegram.sendMessage(chatId, message);
     }
   }
 }
