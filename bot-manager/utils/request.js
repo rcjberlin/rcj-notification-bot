@@ -8,7 +8,7 @@ const fetch = require("node-fetch");
  * @param {Object} body Optinal: Body
  * @returns {Promise} Promise that resolves to an object including status and either json or body
  */
-module.exports = async function (method, url, headers, body) {
+module.exports = async function (method, url, headers=undefined, body=undefined) {
   const result = {};
   try {
     const response = await fetch(url, {
