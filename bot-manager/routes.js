@@ -1,4 +1,5 @@
 const config = require("./utils/config");
+const channels = require("./utils/channels");
 
 const express = require("express");
 const router = express.Router();
@@ -14,11 +15,7 @@ router.get("/", (req, res) => {
 router.get("/v1/channels", (req, res) => {
   res.json({
     successful: true,
-    data: [
-      { id: 1, channel: "General" },
-      { id: 2, channel: "Rescue Line" },
-      { id: 3, channel: "Rescue Line Entry" },
-    ],
+    data: channels,
   });
 });
 

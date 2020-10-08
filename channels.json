@@ -1,0 +1,14 @@
+[
+    {
+        "id": 1,
+        "channel": "General"
+    },
+    {
+        "id": 2,
+        "channel": "Rescue Line"
+    },
+    {
+        "id": 3,
+        "channel": "Rescue Line Entry"
+    }
+]

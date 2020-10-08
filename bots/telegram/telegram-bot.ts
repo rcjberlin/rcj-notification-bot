@@ -1,6 +1,7 @@
 import config = require("../../bot-manager/utils/config");
-import { Telegraf } from "telegraf";
+import channels = require("../../bot-manager/utils/channels");
 
+import { Telegraf } from "telegraf";
 import * as middleware from "./bot-middleware";
 import { adminCommandHandlers } from "./admin-commands";
 
