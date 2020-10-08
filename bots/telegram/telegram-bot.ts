@@ -1,5 +1,4 @@
 import config = require("../../bot-manager/utils/config");
-import channels = require("../../bot-manager/utils/channels");
 
 import { Telegraf } from "telegraf";
 import * as middleware from "./bot-middleware";
@@ -24,7 +23,7 @@ class TelegramBot {
     this.registerInlineKeyboardCallbackHandler();
 
     this.bot.command("/channels", async (ctx) => {
-      ctx.reply("Channels:", inlineKeyboard.channelsForChatAsReplyMarkup(channels, ctx.chat_data.channelIds || []));
+      ctx.reply("Channels:", inlineKeyboard.channelsForChatAsReplyMarkup(ctx.chat_data.channelIds || []));
     });
     this.bot.command("/mychannels", async (ctx) => {
       if (!ctx.chat_data.channelIds || ctx.chat_data.channelIds.length === 0) {
@@ -32,7 +31,7 @@ class TelegramBot {
       } else {
         ctx.reply(
           "Your Channels:",
-          inlineKeyboard.channelsForChatAsReplyMarkup(channels, ctx.chat_data.channelIds, {
+          inlineKeyboard.channelsForChatAsReplyMarkup(ctx.chat_data.channelIds, {
             onlySubscribedChannels: true,
           })
         );
@@ -76,11 +75,12 @@ class TelegramBot {
       const argsHelpText = adminCommandHandlers[command].args.map((arg) => " <" + arg + ">").join("");
       this.HELP_TEXT_ADMIN += `\n*${command}${argsHelpText}*:\n${adminCommandHandlers[command].helpText}\n`;
     }
-    this.bot.on("text", (ctx, next) => {
-      if (ctx.is_admin) {
+    this.bot.on("text", async (ctx, next) => {
+      if (ctx.is_admin === true) {
         const words = ctx.message.text.split(" ");
-        if (words[0] in adminCommandHandlers) {
-          adminCommandHandlers[words[0]].handler(ctx);
+        const command = words[0].toLowerCase();
+        if (command in adminCommandHandlers) {
+          await adminCommandHandlers[command].handler(ctx, command);
         }
       }
       next();
@@ -89,7 +89,7 @@ class TelegramBot {
 
   private registerInlineKeyboardCallbackHandler() {
     for (const inlineKeyboardCommandHandler of inlineKeyboard.inlineKeyboardCommandHandlers) {
-      this.bot.action(inlineKeyboardCommandHandler.regex, (ctx, next) => {
+      this.bot.action(inlineKeyboardCommandHandler.regex, async (ctx, next) => {
         const callbackData = ctx.update.callback_query.data;
         const regexMatch = inlineKeyboardCommandHandler.regex.exec(callbackData);
         if (regexMatch === null) {
@@ -98,7 +98,7 @@ class TelegramBot {
           );
           return next();
         }
-        inlineKeyboardCommandHandler.handler(ctx, callbackData, regexMatch.slice(1), { channels });
+        await inlineKeyboardCommandHandler.handler(ctx, callbackData, regexMatch.slice(1));
         next();
       });
     }
