@@ -256,7 +256,7 @@ export function getSendAdminMessageArgs(ctx): Array<any> {
 export function channelIdsToChannelList(channelIds: tChannelId[]) {
   return `[${channelIds.reduce(
     (text, channelId, index) =>
-      text + (index !== 0 ? ", " : "") + channels.find((channel: IChannel) => channel.id.toString() === channelId).channel,
+      text + (index !== 0 ? ", " : "") + channels.find((channel: IChannel) => channel.id.toString() === channelId.toString()).channel,
     ""
   )}]`;
 }

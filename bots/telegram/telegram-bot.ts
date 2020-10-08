@@ -68,7 +68,7 @@ class TelegramBot {
   sendMessageToChannels(message: string, channelIds: Array<Number | String>): number {
     const chatIds = getChatIdsThatSubscribedOneOfChannelIds(channelIds);
     for (const chatId of chatIds) {
-      this.bot.telegram.sendMessage(chatId, message);
+      this.bot.telegram.sendMessage(chatId, `${inlineKeyboard.channelIdsToChannelList(channelIds)}\n${message}`);
     }
     return chatIds.length;
   }
