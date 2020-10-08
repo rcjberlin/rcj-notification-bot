@@ -1,7 +1,10 @@
+#![feature(proc_macro_hygiene, decl_macro)]
 use std::path::PathBuf;
 use structopt::StructOpt;
 use serde::{Deserialize, Serialize};
-use matrix_sdk::{events::{room::member::MemberEventContent, stripped::StrippedStateEvent},
+use matrix_sdk::{events::{room::member::MemberEventContent, StrippedStateEvent, room::message::{MessageEventContent, TextMessageEventContent},
+                                                                                                AnyMessageEventContent, SyncMessageEvent},
+
                  Client, ClientConfig, EventEmitter, SyncRoom, SyncSettings, Session, };
 use matrix_sdk::identifiers::UserId;
 
@@ -24,8 +27,8 @@ struct Opt {
 
     /// Port to listen on for BotManager callbacks
     // we don't want to name it "speed", need to look smart
-    #[structopt(short = "l", long = "listen-port", default_value = "2001")]
-    listen_port: u16,
+    #[structopt(short = "l", long = "listen-address", default_value = "127.0.0.1:2001")]
+    listen_address: String,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -37,7 +40,7 @@ struct UserSession {
 
 #[derive(Deserialize, Serialize, Debug)]
 struct UserLogin {
-    user_id: UserId,
+    user_id: String,
     password: String,
 }
 
@@ -53,17 +56,18 @@ impl From<UserSession> for Session {
         Self {
             access_token: session.access_token,
             user_id: session.user_id,
-            device_id: session.device_id,
+            device_id: session.device_id.into(),
         }
     }
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Serialize, Debug)]
 struct Config {
     user: UserAuth,
     homeserver: String,
 }
 
+#[derive(Debug, Clone)]
 struct RcjMatrixBot {
     client: Client,
 }
@@ -80,23 +84,57 @@ impl EventEmitter for RcjMatrixBot {
     async fn on_stripped_state_member(
         &self,
         room: SyncRoom,
-        _room_member: &StrippedStateEvent<MemberEventContent>,
+        room_member: &StrippedStateEvent<MemberEventContent>,
         _: Option<MemberEventContent>
     ) {
-        /* TODO: update matrix-sdk
-        if room_member.state_key != self.client.user_id {
+        // unwrap is ok, since we initialized the client
+        if room_member.state_key != self.client.user_id().await.unwrap() {
             return;
         }
-        */
         if let SyncRoom::Invited(room) = room {
             let room = room.read().await;
             println!("Autojoining room {}", room.display_name());
-            // TODO: logging
             if let Err(err) = self.client
                 .join_room_by_id(&room.room_id)
                 .await
             {
-                eprintln!("Failed to join room: {}", err.to_string());
+                eprintln!("Failed to join room: {:?}", err);
+            }
+        }
+    }
+
+    async fn on_room_message(&self, room: SyncRoom, event: &SyncMessageEvent<MessageEventContent>) {
+        if let SyncRoom::Joined(room) = room {
+            let msg_body = if let SyncMessageEvent {
+                content: MessageEventContent::Text(TextMessageEventContent { body: msg_body, ..}),
+                ..
+            } = event
+            {
+                msg_body.clone()
+            } else {
+                String::new()
+            };
+
+            if msg_body.starts_with("!echo ") {
+                let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
+                    TextMessageEventContent {
+                        body: msg_body[6..].to_string(),
+                        formatted: None,
+                        relates_to: None,
+                    },
+                ));
+
+                // we clone here to hold the lock as little time as possible.
+                let room_id = room.read().await.room_id.clone();
+
+                println!("sending");
+
+                if let Err(err) = self.client
+                    .room_send(&room_id, content, None)
+                    .await
+                {
+                    eprintln!("Failed to send message: {:?}", err);
+                }
             }
         }
     }
@@ -109,14 +147,55 @@ async fn listen_matrix(client: Client) {
         .add_event_emitter(Box::new(RcjMatrixBot::new(client.clone())))
         .await;
 
-    client.sync_forever(SyncSettings::default(), |_| async {}).await;
+    client.sync(SyncSettings::default()).await;
 }
+
+use actix_web::{web, App, HttpServer};
+use ruma::RoomId;
+use std::convert::TryFrom;
+
+async fn index(data: web::Data<RcjMatrixBot>) -> String {
+    let user_id = data
+        .client
+        .user_id()
+        .await;
+    let user_id = user_id
+        .as_ref()
+        .map(|id| id.as_str())
+        .unwrap_or("undefined");
+
+    let message = "Hallo Welt! :D";
+
+    let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
+        TextMessageEventContent {
+            body: message.to_owned(),
+            formatted: None,
+            relates_to: None,
+        },
+    ));
+
+
+    // we clone here to hold the lock as little time as possible.
+    let room_id = RoomId::try_from("!FbwAWnZrdbeccOIHEo:tchncs.de").unwrap();
+
+    if let Err(err) = data.client
+        .room_send(&room_id, content, None)
+        .await
+    {
+        format!("Failed to send message: {:?}", err)
+    }
+    else {
+        format!("{}: {}", user_id, message)
+    }
+}
+
+use std::thread;
 
 #[tokio::main]
 async fn main() {
     let opt = Opt::from_args();
     println!("{:?}", opt);
-    let config = fs::read_to_string(opt.config).expect("Failed to open config file");
+    let config = fs::read_to_string(&opt.config).expect("Failed to open config file");
     let mut config: Config = serde_json::from_str(&config).expect("Failed to parse config file");
     println!("{:?}", config);
 
@@ -134,16 +213,37 @@ async fn main() {
             client.restore_login(session.into()).await.expect("Failed to login");
         },
         UserAuth::UserLogin(login) => {
-            let response = client.login(login.user_id.to_string(), login.password, None, Some("RcjBot".to_owned())).await
+            let response = client.login(&login.user_id, &login.password, None, Some("RcjBot")).await
                 .expect("failed to login");
             config.user = UserAuth::UserSession(UserSession {
                 user_id: response.user_id,
-                device_id: response.device_id,
-                access_token: response.access_token,
+                device_id: response.device_id.to_string(),
+                access_token: response.access_token.to_string(),
             });
-            
+            let config = serde_json::to_string_pretty(&config).expect("Failed to reserialize config");
+            fs::write(&opt.config, config).expect("Failed to write file");
         }
     }
 
+    let web_data = RcjMatrixBot::new(client.clone());
+
+    let handle = thread::spawn(move || {
+        actix_rt::System::new("rcj-notification-bot-matrix")
+            .block_on(async move {
+                let client = web::Data::new(web_data);
+                HttpServer::new(move || {
+                    App::new()
+                        .app_data(client.clone())
+                        .route("/", web::get().to(index))
+                })
+                .disable_signals() // fix endlessly running even after ctrl+c
+                .bind("127.0.0.1:8000").expect("failed to bind port")
+                .run()
+                .await
+                .expect("Server stopped unexpectedly")
+            })
+    });
+
     listen_matrix(client).await;
+    handle.join().unwrap();
 }

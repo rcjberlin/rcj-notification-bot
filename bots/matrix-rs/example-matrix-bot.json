@@ -3,7 +3,6 @@
 	"user":
 	{
 		"user_id": "@bot:example.com",
-		"device_id": "ZCXBJMBVWM",
-		"access_token": "..."
+		"password": "..."
 	}
 }
