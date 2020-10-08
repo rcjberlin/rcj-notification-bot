@@ -25,13 +25,13 @@ router.post("/v1/send", async (req, res) => {
   );
 
   let users = 0;
-  for (let i = 0; i < config.bots.length; i++) {
+  for (let i = 0; i < Object.keys(config.bots).length; i++) {
     if (responses[i].status !== 200) {
       // TODO: retry later, bot is probably only down for some time
       // TODO: alert admins (via bots?)
     }
     try {
-      users += responses.json.data.users;
+      users += responses[i].json.data.users;
     } catch {
       // TODO
     }
