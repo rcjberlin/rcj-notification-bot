@@ -1,20 +1,26 @@
-#![feature(proc_macro_hygiene, decl_macro)]
+use matrix_sdk::identifiers::UserId;
+use matrix_sdk::{
+    events::{
+        room::member::MemberEventContent,
+        room::message::{MessageEventContent, TextMessageEventContent},
+        AnyMessageEventContent, StrippedStateEvent, SyncMessageEvent,
+    },
+    Client, ClientConfig, EventEmitter, Session, SyncRoom, SyncSettings,
+};
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use serde::{Deserialize, Serialize};
-use matrix_sdk::{events::{room::member::MemberEventContent, StrippedStateEvent, room::message::{MessageEventContent, TextMessageEventContent},
-                                                                                                AnyMessageEventContent, SyncMessageEvent},
 
-                 Client, ClientConfig, EventEmitter, SyncRoom, SyncSettings, Session, };
-use matrix_sdk::identifiers::UserId;
-
-use std::fs;
-use std::convert::From;
-use url::Url;
 use async_trait::async_trait;
+use std::convert::From;
+use std::fs;
+use url::Url;
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "rcj-notification-bot", about = "Matrix bot to notify teams during the competition.")]
+#[structopt(
+    name = "rcj-notification-bot",
+    about = "Matrix bot to notify teams during the competition."
+)]
 struct Opt {
     /// Activate debug mode
     // short and long flags (-d, --debug) will be deduced from the field's name
@@ -85,7 +91,7 @@ impl EventEmitter for RcjMatrixBot {
         &self,
         room: SyncRoom,
         room_member: &StrippedStateEvent<MemberEventContent>,
-        _: Option<MemberEventContent>
+        _: Option<MemberEventContent>,
     ) {
         // unwrap is ok, since we initialized the client
         if room_member.state_key != self.client.user_id().await.unwrap() {
@@ -94,10 +100,7 @@ impl EventEmitter for RcjMatrixBot {
         if let SyncRoom::Invited(room) = room {
             let room = room.read().await;
             println!("Autojoining room {}", room.display_name());
-            if let Err(err) = self.client
-                .join_room_by_id(&room.room_id)
-                .await
-            {
+            if let Err(err) = self.client.join_room_by_id(&room.room_id).await {
                 eprintln!("Failed to join room: {:?}", err);
             }
         }
@@ -106,7 +109,7 @@ impl EventEmitter for RcjMatrixBot {
     async fn on_room_message(&self, room: SyncRoom, event: &SyncMessageEvent<MessageEventContent>) {
         if let SyncRoom::Joined(room) = room {
             let msg_body = if let SyncMessageEvent {
-                content: MessageEventContent::Text(TextMessageEventContent { body: msg_body, ..}),
+                content: MessageEventContent::Text(TextMessageEventContent { body: msg_body, .. }),
                 ..
             } = event
             {
@@ -129,10 +132,7 @@ impl EventEmitter for RcjMatrixBot {
 
                 println!("sending");
 
-                if let Err(err) = self.client
-                    .room_send(&room_id, content, None)
-                    .await
-                {
+                if let Err(err) = self.client.room_send(&room_id, content, None).await {
                     eprintln!("Failed to send message: {:?}", err);
                 }
             }
@@ -155,10 +155,7 @@ use ruma::RoomId;
 use std::convert::TryFrom;
 
 async fn index(data: web::Data<RcjMatrixBot>) -> String {
-    let user_id = data
-        .client
-        .user_id()
-        .await;
+    let user_id = data.client.user_id().await;
     let user_id = user_id
         .as_ref()
         .map(|id| id.as_str())
@@ -166,25 +163,19 @@ async fn index(data: web::Data<RcjMatrixBot>) -> String {
 
     let message = "Hallo Welt! :D";
 
-    let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
-        TextMessageEventContent {
+    let content =
+        AnyMessageEventContent::RoomMessage(MessageEventContent::Text(TextMessageEventContent {
             body: message.to_owned(),
             formatted: None,
             relates_to: None,
-        },
-    ));
-
+        }));
 
     // we clone here to hold the lock as little time as possible.
     let room_id = RoomId::try_from("!FbwAWnZrdbeccOIHEo:tchncs.de").unwrap();
 
-    if let Err(err) = data.client
-        .room_send(&room_id, content, None)
-        .await
-    {
+    if let Err(err) = data.client.room_send(&room_id, content, None).await {
         format!("Failed to send message: {:?}", err)
-    }
-    else {
+    } else {
         format!("{}: {}", user_id, message)
     }
 }
@@ -200,27 +191,37 @@ async fn main() {
     println!("{:?}", config);
 
     // create data directory
-    let xdg_dirs = xdg::BaseDirectories::with_prefix("rcj-matrix-bot").expect("Failed to open XDG directories");
-    let data_dir = xdg_dirs.create_data_directory("matrix-rust-sdk").expect("Couldn't create data directory");
+    let xdg_dirs = xdg::BaseDirectories::with_prefix("rcj-matrix-bot")
+        .expect("Failed to open XDG directories");
+    let data_dir = xdg_dirs
+        .create_data_directory("matrix-rust-sdk")
+        .expect("Couldn't create data directory");
 
     // login to matrix
     let client_config = ClientConfig::new().store_path(data_dir);
     let homeserver_url = Url::parse(&config.homeserver).expect("Invalid homeserver");
-    let client = Client::new_with_config(homeserver_url, client_config).expect("Failed to create client");
+    let client =
+        Client::new_with_config(homeserver_url, client_config).expect("Failed to create client");
 
     match config.user {
         UserAuth::UserSession(session) => {
-            client.restore_login(session.into()).await.expect("Failed to login");
-        },
+            client
+                .restore_login(session.into())
+                .await
+                .expect("Failed to login");
+        }
         UserAuth::UserLogin(login) => {
-            let response = client.login(&login.user_id, &login.password, None, Some("RcjBot")).await
+            let response = client
+                .login(&login.user_id, &login.password, None, Some("RcjBot"))
+                .await
                 .expect("failed to login");
             config.user = UserAuth::UserSession(UserSession {
                 user_id: response.user_id,
                 device_id: response.device_id.to_string(),
                 access_token: response.access_token.to_string(),
             });
-            let config = serde_json::to_string_pretty(&config).expect("Failed to reserialize config");
+            let config =
+                serde_json::to_string_pretty(&config).expect("Failed to reserialize config");
             fs::write(&opt.config, config).expect("Failed to write file");
         }
     }
@@ -228,20 +229,20 @@ async fn main() {
     let web_data = RcjMatrixBot::new(client.clone());
 
     let handle = thread::spawn(move || {
-        actix_rt::System::new("rcj-notification-bot-matrix")
-            .block_on(async move {
-                let client = web::Data::new(web_data);
-                HttpServer::new(move || {
-                    App::new()
-                        .app_data(client.clone())
-                        .route("/", web::get().to(index))
-                })
-                .disable_signals() // fix endlessly running even after ctrl+c
-                .bind("127.0.0.1:8000").expect("failed to bind port")
-                .run()
-                .await
-                .expect("Server stopped unexpectedly")
+        actix_rt::System::new("rcj-notification-bot-matrix").block_on(async move {
+            let client = web::Data::new(web_data);
+            HttpServer::new(move || {
+                App::new()
+                    .app_data(client.clone())
+                    .route("/", web::get().to(index))
             })
+            .disable_signals() // fix endlessly running even after ctrl+c
+            .bind("127.0.0.1:8000")
+            .expect("failed to bind port")
+            .run()
+            .await
+            .expect("Server stopped unexpectedly")
+        })
     });
 
     listen_matrix(client).await;
