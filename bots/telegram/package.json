@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "",
   "author": "rcjberlin",
+  "scripts": {
+    "start": "ts-node index.ts"
+  },
   "dependencies": {
     "express": "^4.17.1",
     "telegraf": "^3.38.0"

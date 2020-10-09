@@ -1,6 +1,20 @@
 # Installation
 
+Make sure to have Node.js and npm installed.
+
+Navigate into each folder and run the following commands.
+Go back to the root directory after each step.
+
 ```bash
+# bot-manager
+$ cd bot-manager
+$ npm install
+
+# telegram bot
+$ cd bots/telegram
+$ npm install
+
+# matrix bot
 # todo
 ```
 
@@ -25,7 +39,7 @@ Configure all services in `config.json`.
             "TELEGRAM_ADMIN_USERNAMES": [
                 "nikolockenvitz"
             ],
-            "TELEGRAM_USER_IDS_NOTIFY_ON_ERROR": [
+            "TELEGRAM_CHAT_IDS_NOTIFY_ON_ERROR": [
                 123456789
             ]
         },
@@ -39,6 +53,15 @@ Configure all services in `config.json`.
 # Run
 
 ```bash
+# bot-manager
+$ cd bot-manager
+$ node index.js # npm run start
+
+# telegram bot
+$ cd bots/telegram
+$ ts-node index.ts # npm run start
+
+# matrix bot
 # todo
 ```
 
