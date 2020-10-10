@@ -12,7 +12,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use async_trait::async_trait;
-use std::convert::From;
+use std::convert::{From, Infallible};
 use std::fs;
 use url::Url;
 
@@ -84,6 +84,8 @@ impl RcjMatrixBot {
     }
 }
 
+use tokio::time::{delay_for, Duration};
+
 #[async_trait]
 impl EventEmitter for RcjMatrixBot {
     // autojoining
@@ -100,23 +102,36 @@ impl EventEmitter for RcjMatrixBot {
         if let SyncRoom::Invited(room) = room {
             let room = room.read().await;
             println!("Autojoining room {}", room.display_name());
-            if let Err(err) = self.client.join_room_by_id(&room.room_id).await {
-                eprintln!("Failed to join room: {:?}", err);
+            let mut delay = 2;
+            while let Err(err) = self.client.join_room_by_id(&room.room_id).await {
+                eprintln!("Failed to join room {} ({:?}), retrying in {}s", room.display_name(), err, delay);
+                delay_for(Duration::from_secs(delay)).await;
+                delay *= 2;
+                if delay > 3600 {
+                    eprintln!("Failed to join room {} ({:?})", room.display_name(), err);
+                    break;
+                }
             }
+            println!("Successfully joined room {}", room.display_name());
         }
     }
 
     async fn on_room_message(&self, room: SyncRoom, event: &SyncMessageEvent<MessageEventContent>) {
         if let SyncRoom::Joined(room) = room {
-            let msg_body = if let SyncMessageEvent {
+            let (msg_body, sender) = if let SyncMessageEvent {
                 content: MessageEventContent::Text(TextMessageEventContent { body: msg_body, .. }),
+                sender,
                 ..
             } = event
             {
-                msg_body.clone()
+                (msg_body.clone(), sender)
             } else {
-                String::new()
+                return;
             };
+
+            if sender == &self.client.user_id().await.unwrap() {
+                return;
+            }
 
             if msg_body.starts_with("!echo ") {
                 let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
@@ -150,11 +165,12 @@ async fn listen_matrix(client: Client) {
     client.sync(SyncSettings::default()).await;
 }
 
-use actix_web::{web, App, HttpServer};
 use ruma::RoomId;
 use std::convert::TryFrom;
+use std::net::SocketAddr;
+use warp::{Filter, Reply};
 
-async fn index(data: web::Data<RcjMatrixBot>) -> String {
+async fn index(data: RcjMatrixBot) -> Result<impl Reply, Infallible> {
     let user_id = data.client.user_id().await;
     let user_id = user_id
         .as_ref()
@@ -170,17 +186,18 @@ async fn index(data: web::Data<RcjMatrixBot>) -> String {
             relates_to: None,
         }));
 
-    // we clone here to hold the lock as little time as possible.
     let room_id = RoomId::try_from("!FbwAWnZrdbeccOIHEo:tchncs.de").unwrap();
 
-    if let Err(err) = data.client.room_send(&room_id, content, None).await {
+    Ok(if let Err(err) = data.client.room_send(&room_id, content, None).await {
         format!("Failed to send message: {:?}", err)
     } else {
         format!("{}: {}", user_id, message)
-    }
+    })
 }
 
-use std::thread;
+fn with_data(client: RcjMatrixBot) -> impl Filter<Extract = (RcjMatrixBot,), Error = Infallible> + Clone {
+    warp::any().map(move || client.clone())
+}
 
 #[tokio::main]
 async fn main() {
@@ -226,25 +243,12 @@ async fn main() {
         }
     }
 
-    let web_data = RcjMatrixBot::new(client.clone());
+    let warp_data = RcjMatrixBot::new(client.clone());
+    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
+    let index_route = warp::any()
+        .and(with_data(warp_data))
+        .and_then(index);
+    let http = warp::serve(index_route).run(addr);
 
-    let handle = thread::spawn(move || {
-        actix_rt::System::new("rcj-notification-bot-matrix").block_on(async move {
-            let client = web::Data::new(web_data);
-            HttpServer::new(move || {
-                App::new()
-                    .app_data(client.clone())
-                    .route("/", web::get().to(index))
-            })
-            .disable_signals() // fix endlessly running even after ctrl+c
-            .bind("127.0.0.1:8000")
-            .expect("failed to bind port")
-            .run()
-            .await
-            .expect("Server stopped unexpectedly")
-        })
-    });
-
-    listen_matrix(client).await;
-    handle.join().unwrap();
+    tokio::join!(listen_matrix(client), http);
 }
