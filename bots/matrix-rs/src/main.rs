@@ -14,6 +14,7 @@ use structopt::StructOpt;
 use async_trait::async_trait;
 use std::convert::{From, Infallible};
 use std::fs;
+use std::net::SocketAddr;
 use url::Url;
 
 #[derive(Debug, StructOpt)]
@@ -22,11 +23,6 @@ use url::Url;
     about = "Matrix bot to notify teams during the competition."
 )]
 struct Opt {
-    /// Activate debug mode
-    // short and long flags (-d, --debug) will be deduced from the field's name
-    #[structopt(short, long)]
-    debug: bool,
-
     /// Config file
     #[structopt(short, long, parse(from_os_str), default_value = "matrix-bot.json")]
     config: PathBuf,
@@ -34,7 +30,7 @@ struct Opt {
     /// Port to listen on for BotManager callbacks
     // we don't want to name it "speed", need to look smart
     #[structopt(short = "l", long = "listen-address", default_value = "127.0.0.1:2001")]
-    listen_address: String,
+    listen_address: SocketAddr,
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -101,18 +97,23 @@ impl EventEmitter for RcjMatrixBot {
         }
         if let SyncRoom::Invited(room) = room {
             let room = room.read().await;
-            println!("Autojoining room {}", room.display_name());
+            println!("Autojoining room {}", room.room_id);
             let mut delay = 2;
             while let Err(err) = self.client.join_room_by_id(&room.room_id).await {
-                eprintln!("Failed to join room {} ({:?}), retrying in {}s", room.display_name(), err, delay);
+                // retry autojoin due to synapse sending invites, before the invited user can join
+                // for more information see https://github.com/matrix-org/synapse/issues/4345
+                eprintln!(
+                    "Failed to join room {} ({:?}), retrying in {}s",
+                    room.room_id, err, delay
+                );
                 delay_for(Duration::from_secs(delay)).await;
                 delay *= 2;
                 if delay > 3600 {
-                    eprintln!("Failed to join room {} ({:?})", room.display_name(), err);
+                    eprintln!("Can't join room {} ({:?})", room.room_id, err);
                     break;
                 }
             }
-            println!("Successfully joined room {}", room.display_name());
+            println!("Successfully joined room {}", room.room_id);
         }
     }
 
@@ -162,12 +163,11 @@ async fn listen_matrix(client: Client) {
         .add_event_emitter(Box::new(RcjMatrixBot::new(client.clone())))
         .await;
 
-    client.sync(SyncSettings::default()).await;
+    client.sync(SyncSettings::default().full_state(false)).await;
 }
 
 use ruma::RoomId;
 use std::convert::TryFrom;
-use std::net::SocketAddr;
 use warp::{Filter, Reply};
 
 async fn index(data: RcjMatrixBot) -> Result<impl Reply, Infallible> {
@@ -188,24 +188,24 @@ async fn index(data: RcjMatrixBot) -> Result<impl Reply, Infallible> {
 
     let room_id = RoomId::try_from("!FbwAWnZrdbeccOIHEo:tchncs.de").unwrap();
 
-    Ok(if let Err(err) = data.client.room_send(&room_id, content, None).await {
-        format!("Failed to send message: {:?}", err)
+    if let Err(err) = data.client.room_send(&room_id, content, None).await {
+        Ok(format!("Failed to send message: {:?}", err))
     } else {
-        format!("{}: {}", user_id, message)
-    })
+        Ok(format!("{}: {}", user_id, message))
+    }
 }
 
-fn with_data(client: RcjMatrixBot) -> impl Filter<Extract = (RcjMatrixBot,), Error = Infallible> + Clone {
+fn with_data(
+    client: RcjMatrixBot,
+) -> impl Filter<Extract = (RcjMatrixBot,), Error = Infallible> + Clone {
     warp::any().map(move || client.clone())
 }
 
 #[tokio::main]
 async fn main() {
     let opt = Opt::from_args();
-    println!("{:?}", opt);
     let config = fs::read_to_string(&opt.config).expect("Failed to open config file");
     let mut config: Config = serde_json::from_str(&config).expect("Failed to parse config file");
-    println!("{:?}", config);
 
     // create data directory
     let xdg_dirs = xdg::BaseDirectories::with_prefix("rcj-matrix-bot")
@@ -244,11 +244,8 @@ async fn main() {
     }
 
     let warp_data = RcjMatrixBot::new(client.clone());
-    let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
-    let index_route = warp::any()
-        .and(with_data(warp_data))
-        .and_then(index);
-    let http = warp::serve(index_route).run(addr);
+    let index_route = warp::any().and(with_data(warp_data)).and_then(index);
+    let http = warp::serve(index_route).run(opt.listen_address);
 
     tokio::join!(listen_matrix(client), http);
 }
