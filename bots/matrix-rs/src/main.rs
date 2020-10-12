@@ -49,6 +49,7 @@ enum UserAuth {
 struct Config {
     user: UserAuth,
     homeserver: String,
+    http_auth_token: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -120,8 +121,8 @@ impl EventEmitter for RcjMatrixBot {
             let room_id = room.read().await.room_id.clone();
 
             let msg = msg_body.split_whitespace();
-            let msg_normalized = msg.fold(String::new(), |mut s, el| { s.push_str(el); s });
-            println!("> {}: {}", &room_id, msg_normalized);
+            let msg_normalized = msg.collect::<Vec<_>>().join(" ");
+            println!("> {} [{}]: {}", &room_id, &sender, msg_normalized);
 
             if msg_body.starts_with("!echo ") {
                 let response = &msg_body[6..];
@@ -133,7 +134,7 @@ impl EventEmitter for RcjMatrixBot {
                     },
                 ));
 
-                println!("{}: {}", &room_id, response);
+                println!("{} [Bot]: {}", &room_id, response);
 
                 if let Err(err) = self.client.room_send(&room_id, content, None).await {
                     eprintln!("{} Failed to send message: {:?}", &room_id, err);
@@ -154,37 +155,54 @@ async fn listen_matrix(client: Client) {
 }
 
 use ruma::RoomId;
-use std::convert::TryFrom;
 use warp::{Filter, Reply};
+use std::sync::Arc;
 
-async fn index(data: RcjMatrixBot) -> Result<impl Reply, Infallible> {
-    let user_id = data.client.user_id().await;
-    let user_id = user_id
-        .as_ref()
-        .map(|id| id.as_str())
-        .unwrap_or("undefined");
+#[derive(Debug, Clone)]
+struct HttpData {
+    matrix: Client,
+    token: Arc<Vec<String>>,
+}
 
-    let message = "Hallo Welt! :D";
+impl HttpData {
+    fn new(matrix: Client, token: Vec<String>) -> HttpData {
+        HttpData { matrix, token: Arc::from(token) }
+    }
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+struct SendMessage {
+    token: String,
+    room: RoomId,
+    content: String,
+}
+
+async fn index(data: HttpData, request: SendMessage) -> Result<impl Reply, Infallible> {
+    if !data.token.contains(&request.token) {
+        return Ok("Invalid token".to_owned());
+    }
 
     let content =
         AnyMessageEventContent::RoomMessage(MessageEventContent::Text(TextMessageEventContent {
-            body: message.to_owned(),
+            body: request.content.clone(),
             formatted: None,
             relates_to: None,
         }));
 
-    let room_id = RoomId::try_from("!FbwAWnZrdbeccOIHEo:tchncs.de").unwrap();
+    println!("{} [HTTP]: {}", request.room, request.content);
 
-    if let Err(err) = data.client.room_send(&room_id, content, None).await {
+    if let Err(err) = data.matrix.room_send(&request.room, content, None).await {
+        eprintln!("{} Failed to send message: {:?}", &request.room, err);
+        // TODO: status code 500
         Ok(format!("Failed to send message: {:?}", err))
     } else {
-        Ok(format!("{}: {}", user_id, message))
+        Ok(String::new())
     }
 }
 
 fn with_data(
-    client: RcjMatrixBot,
-) -> impl Filter<Extract = (RcjMatrixBot,), Error = Infallible> + Clone {
+    client: HttpData,
+) -> impl Filter<Extract = (HttpData,), Error = Infallible> + Clone {
     warp::any().map(move || client.clone())
 }
 
@@ -230,8 +248,12 @@ async fn main() {
         }
     }
 
-    let warp_data = RcjMatrixBot::new(client.clone());
-    let index_route = warp::any().and(with_data(warp_data)).and_then(index);
+    let warp_data = HttpData::new(client.clone(), config.http_auth_token);
+    let index_route = warp::path!("send")
+        .and(warp::body::content_length_limit(1024 * 32))
+        .and(with_data(warp_data))
+        .and(warp::body::json())
+        .and_then(index);
     let http = warp::serve(index_route).run(opt.listen_address);
 
     tokio::join!(listen_matrix(client), http);

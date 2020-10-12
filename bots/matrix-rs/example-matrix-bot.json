@@ -5,4 +5,5 @@
 		"user_id": "@bot:example.com",
 		"password": "..."
 	}
+	"http_auth_token": []
 }
