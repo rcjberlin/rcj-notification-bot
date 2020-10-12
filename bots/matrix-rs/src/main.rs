@@ -1,4 +1,3 @@
-use matrix_sdk::identifiers::UserId;
 use matrix_sdk::{
     events::{
         room::member::MemberEventContent,
@@ -12,7 +11,7 @@ use std::path::PathBuf;
 use structopt::StructOpt;
 
 use async_trait::async_trait;
-use std::convert::{From, Infallible};
+use std::convert::Infallible;
 use std::fs;
 use std::net::SocketAddr;
 use url::Url;
@@ -34,14 +33,7 @@ struct Opt {
 }
 
 #[derive(Deserialize, Serialize, Debug)]
-struct UserSession {
-    access_token: String,
-    user_id: UserId,
-    device_id: String,
-}
-
-#[derive(Deserialize, Serialize, Debug)]
-struct UserLogin {
+struct UserCredentials {
     user_id: String,
     password: String,
 }
@@ -49,18 +41,8 @@ struct UserLogin {
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(untagged)]
 enum UserAuth {
-    UserSession(UserSession),
-    UserLogin(UserLogin),
-}
-
-impl From<UserSession> for Session {
-    fn from(session: UserSession) -> Self {
-        Self {
-            access_token: session.access_token,
-            user_id: session.user_id,
-            device_id: session.device_id.into(),
-        }
-    }
+    Session(Session),
+    Login(UserCredentials),
 }
 
 #[derive(Deserialize, Serialize, Debug)]
@@ -221,20 +203,20 @@ async fn main() {
         Client::new_with_config(homeserver_url, client_config).expect("Failed to create client");
 
     match config.user {
-        UserAuth::UserSession(session) => {
+        UserAuth::Session(session) => {
             client
-                .restore_login(session.into())
+                .restore_login(session)
                 .await
                 .expect("Failed to login");
         }
-        UserAuth::UserLogin(login) => {
+        UserAuth::Login(login) => {
             let response = client
                 .login(&login.user_id, &login.password, None, Some("RcjBot"))
                 .await
                 .expect("failed to login");
-            config.user = UserAuth::UserSession(UserSession {
+            config.user = UserAuth::Session(Session {
                 user_id: response.user_id,
-                device_id: response.device_id.to_string(),
+                device_id: response.device_id,
                 access_token: response.access_token.to_string(),
             });
             let config =

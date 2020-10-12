@@ -8,6 +8,7 @@ edition = "2018"
 
 [profile.release]
 lto = true
+panic = "abort"
 
 [dependencies]
 structopt = "0.3"
