@@ -116,22 +116,27 @@ impl EventEmitter for RcjMatrixBot {
                 return;
             }
 
+            // we clone here to hold the lock as little time as possible.
+            let room_id = room.read().await.room_id.clone();
+
+            let msg = msg_body.split_whitespace();
+            let msg_normalized = msg.fold(String::new(), |mut s, el| { s.push_str(el); s });
+            println!("> {}: {}", &room_id, msg_normalized);
+
             if msg_body.starts_with("!echo ") {
+                let response = &msg_body[6..];
                 let content = AnyMessageEventContent::RoomMessage(MessageEventContent::Text(
                     TextMessageEventContent {
-                        body: msg_body[6..].to_string(),
+                        body: response.to_string(),
                         formatted: None,
                         relates_to: None,
                     },
                 ));
 
-                // we clone here to hold the lock as little time as possible.
-                let room_id = room.read().await.room_id.clone();
-
-                println!("sending");
+                println!("{}: {}", &room_id, response);
 
                 if let Err(err) = self.client.room_send(&room_id, content, None).await {
-                    eprintln!("Failed to send message: {:?}", err);
+                    eprintln!("{} Failed to send message: {:?}", &room_id, err);
                 }
             }
         }
@@ -217,7 +222,7 @@ async fn main() {
             config.user = UserAuth::Session(Session {
                 user_id: response.user_id,
                 device_id: response.device_id,
-                access_token: response.access_token.to_string(),
+                access_token: response.access_token,
             });
             let config =
                 serde_json::to_string_pretty(&config).expect("Failed to reserialize config");
