@@ -9,6 +9,7 @@ edition = "2018"
 [profile.release]
 lto = true
 panic = "abort"
+codegen-units = 1   # Reduce number of codegen units to increase optimizations.
 
 [dependencies]
 structopt = "0.3"
