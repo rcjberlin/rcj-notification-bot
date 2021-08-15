@@ -10,6 +10,10 @@ Go back to the root directory after each step.
 $ cd bot-manager
 $ npm install
 
+# notification-manager
+$ cd notification-manager
+$ npm install
+
 # telegram bot
 $ cd bots/telegram
 $ npm install
@@ -28,8 +32,13 @@ Configure all services in `config.json`.
         "INTERNAL_PORT": 41401,
         "EXTERNAL_PORT": 1337,
         "TOKENS": [
-            "token-to-authenticate-requests-from-rcj-server",
             "token-to-authenticate-requests-from-admin-dashboard"
+        ]
+    },
+    "notificationmanager": {
+        "EXTERNAL_PORT": 1338,
+        "TOKENS": [
+            "token-to-authenticate-requests-from-rcj-server"
         ]
     },
     "bots": {
@@ -55,6 +64,10 @@ Configure all services in `config.json`.
 ```bash
 # bot-manager
 $ cd bot-manager
+$ node index.js # npm run start
+
+# notification-manager
+$ cd notification-manager
 $ node index.js # npm run start
 
 # telegram bot
