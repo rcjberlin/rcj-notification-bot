@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="./style.css" />
     <script src="sync-input-values.js" type="text/javascript" defer></script>
     <script src="bot-manager-api.js" type="text/javascript" defer></script>
+    <script src="load-data.js" type="text/javascript" defer></script>
     <script src="main.js" type="text/javascript" defer></script>
   </head>
 
@@ -22,50 +23,14 @@
 
     <div id="box-wrapper">
       <div data-tab-title="Channels" class="box">
-        <table>
+        <table id="channel-table">
           <tr>
             <td>Channel</td>
             <td>#Subscribers</td>
           </tr>
-          <tr>
-            <td><a href="?channel=1">General</a></td>
-            <td>9</td>
-          </tr>
-          <tr>
-            <td>Rescue Line</td>
-            <td>5</td>
-          </tr>
-          <tr>
-            <td>Rescue Line Entry</td>
-            <td>4</td>
-          </tr>
-          <tr>
-            <td>Team ABC</td>
-            <td>2</td>
-          </tr>
-          <tr>
-            <td>Team DEF</td>
-            <td>3</td>
-          </tr>
-          <tr>
-            <td>Team GHI</td>
-            <td>0</td>
-          </tr>
-          <tr>
-            <td>Team JKL</td>
-            <td>0</td>
-          </tr>
-          <tr>
-            <td>Team MNO</td>
-            <td>3</td>
-          </tr>
-          <tr>
-            <td>Team XYZ</td>
-            <td>1</td>
-          </tr>
         </table>
-        <div id="channel-detail" style="margin-top: 1em">
-          Channel: ---
+        <div id="channel-detail" style="margin-top: 1em" class="hidden">
+          Channel: <span id="channel-detail-name">---</span>
           <br />
           Send message:<br />
           <textarea></textarea>
@@ -74,7 +39,7 @@
           <br />
           Messages sent:
           <br />
-          <table>
+          <table id="channel-detail-sent-messages">
             <tr>
               <td>Channel</td>
               <td>Timestamp</td>
@@ -144,18 +109,10 @@
         </table>
       </div>
       <div data-tab-title="Stats" class="box">
-        <table>
+        <table id="stats-users-per-messenger">
           <tr>
             <td>Messenger</td>
             <td>#Users</td>
-          </tr>
-          <tr>
-            <td>Signal</td>
-            <td>7</td>
-          </tr>
-          <tr>
-            <td>Matrix</td>
-            <td>2</td>
           </tr>
         </table>
       </div>

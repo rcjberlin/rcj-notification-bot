@@ -12,7 +12,7 @@ window.onload = function () {
   initTabs();
   switchToTab(readTabIdFromLocalStorage() || 0);
   initInputSyncing();
-  getChannels();
+  loadData();
 };
 
 function initTabs() {

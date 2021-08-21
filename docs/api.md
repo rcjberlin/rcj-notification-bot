@@ -74,6 +74,29 @@ Response (200):
 }
 ```
 
+## GET /v1/users
+
+Returns how many users subscribed each channel.
+
+Response (200):
+
+```json
+{
+    "successful": true,
+    "data": {
+        "signal": {
+            "total": 13,
+            "channels": {
+                "1": 3,
+                "2": 7,
+                "<channelId>...": 0
+            }
+        },
+        "<bot-name>": {}
+    }
+}
+```
+
 # Bot
 
 A Bot handles the direct communication with the users and sends messages as directed by the Bot Manager.
@@ -111,6 +134,29 @@ Response (200):
     "data": {
         "users": 0, // number of users the message has been sent to
     },
+}
+```
+
+## GET /v1/users
+
+Returns how many users subscribed each channel.
+
+Response (200):
+
+```json
+{
+    "successful": true,
+    "data": {
+        "signal": {
+            "total": 13,
+            "channels": {
+                "1": 3,
+                "2": 7,
+                "<channelId>...": 0
+            }
+        },
+        "<bot-name>": {}
+    }
 }
 ```
 

@@ -24,6 +24,10 @@ async function sendRequestToBotManagerAPI(path) {
   return {};
 }
 
-async function getChannels() {
-  sendRequestToBotManagerAPI("/v1/channels");
+function getChannels() {
+  return sendRequestToBotManagerAPI("/v1/channels");
+}
+
+function getUsers() {
+  return sendRequestToBotManagerAPI("/v1/users");
 }

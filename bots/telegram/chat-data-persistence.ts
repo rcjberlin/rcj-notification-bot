@@ -52,3 +52,21 @@ export function getChatIdsThatSubscribedOneOfChannelIds(channelIds: Array<Number
   }
   return chatIds;
 }
+
+export function getUsersPerChannelAndTotalUsers() {
+  const usersPerChannel = {};
+  let totalUsers = 0;
+  for (const chatId in CHAT_DATA) {
+    if (CHAT_DATA[chatId].channelIds && CHAT_DATA[chatId].channelIds.length > 0) {
+      totalUsers += 1;
+      for (const subsribedChannel of CHAT_DATA[chatId].channelIds) {
+        if (subsribedChannel in usersPerChannel) {
+          usersPerChannel[subsribedChannel] += 1;
+        } else {
+          usersPerChannel[subsribedChannel] = 1;
+        }
+      }
+    }
+  }
+  return { usersPerChannel, totalUsers };
+}

@@ -29,6 +29,7 @@ router.post("/v1/send", async (req, res) => {
     if (responses[i].status !== 200) {
       // TODO: retry later, bot is probably only down for some time
       // TODO: alert admins (via bots?)
+      continue;
     }
     try {
       users += responses[i].json.data.users;
@@ -42,6 +43,37 @@ router.post("/v1/send", async (req, res) => {
     data: {
       users,
     },
+  });
+});
+
+router.get("/v1/users", async (req, res) => {
+  const responses = await Promise.all(
+    Object.keys(config.bots).map((bot) => request("GET", `http://localhost:${config.bots[bot].INTERNAL_PORT}/v1/users`))
+  );
+
+  const responseData = {};
+  for (let i = 0; i < Object.keys(config.bots).length; i++) {
+    const botPrefix = Object.keys(config.bots)[i];
+    if (responses[i].status !== 200) {
+      // TODO: retry later, bot is probably only down for some time
+      // TODO: alert admins (via bots?)
+
+      responseData[botPrefix] = { total: 0, channels: {} };
+      continue;
+    }
+    try {
+      const data = responses[i].json.data;
+      for (const bot in data) {
+        responseData[`${botPrefix}-${bot}`] = data[bot];
+      }
+    } catch {
+      // TODO
+    }
+  }
+
+  res.json({
+    successful: true,
+    data: responseData,
   });
 });
 
