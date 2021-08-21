@@ -1,6 +1,7 @@
 import config = require("../../bot-manager/utils/config");
 import channels = require("../../bot-manager/utils/channels");
 import request = require("../../bot-manager/utils/request");
+import { i18n, DEFAULT_LANGUAGE } from "./i18n";
 
 const INLINE_KEYBOARD_COMMAND = {
   SUBSCRIBE: "subscribe",
@@ -9,6 +10,7 @@ const INLINE_KEYBOARD_COMMAND = {
   ADMIN_CANCEL_SEND_MESSAGE: "admincancel",
   ADMIN_SELECT_CHANNEL: "adminselect",
   ADMIN_DESELECT_CHANNEL: "admindeselect",
+  SET_LANGUAGE: "language",
 };
 
 type tChannelId = Number | String;
@@ -91,6 +93,25 @@ export function getDefaultAdminDataObject() {
   return { message: "", selectedChannelIds: [] };
 }
 
+export function languagesForChatAsReplyMarkup(currentLanguage = DEFAULT_LANGUAGE) {
+  return {
+    reply_markup: {
+      inline_keyboard: [
+        [
+          {
+            text: "Deutsch" + (currentLanguage === "de" ? " ✅️" : ""),
+            callback_data: `${INLINE_KEYBOARD_COMMAND.SET_LANGUAGE} de`,
+          },
+          {
+            text: "English" + (currentLanguage === "en" ? " ✅️" : ""),
+            callback_data: `${INLINE_KEYBOARD_COMMAND.SET_LANGUAGE} en`,
+          },
+        ],
+      ],
+    },
+  };
+}
+
 interface IInlineKeyboardCommandHandler {
   regex: RegExp;
   handler: (ctx, callbackData: string, regexMatch: string[]) => void | Promise<void>;
@@ -111,7 +132,7 @@ export const inlineKeyboardCommandHandlers: IInlineKeyboardCommandHandler[] = [
         ctx.update.callback_query.message.chat.id,
         ctx.update.callback_query.message.message_id,
         null,
-        `Subscribed ${channels.find((channel: IChannel) => channel.id.toString() === channelId).channel}`,
+        `${i18n.subscribed(ctx.chat_data.language)} ${channels.find((channel: IChannel) => channel.id.toString() === channelId).channel}`,
         channelsForChatAsReplyMarkup(ctx.chat_data.channelIds, {
           onlySubscribedChannels: listAllOrOnlySubsribedChannels === "o",
         })
@@ -133,7 +154,7 @@ export const inlineKeyboardCommandHandlers: IInlineKeyboardCommandHandler[] = [
         ctx.update.callback_query.message.chat.id,
         ctx.update.callback_query.message.message_id,
         null,
-        `Unsubscribed ${channels.find((channel: IChannel) => channel.id.toString() === channelId).channel}`,
+        `${i18n.unsubscribed(ctx.chat_data.language)} ${channels.find((channel: IChannel) => channel.id.toString() === channelId).channel}`,
         channelsForChatAsReplyMarkup(ctx.chat_data.channelIds, {
           onlySubscribedChannels: listAllOrOnlySubsribedChannels === "o",
         })
@@ -241,6 +262,20 @@ export const inlineKeyboardCommandHandlers: IInlineKeyboardCommandHandler[] = [
         ctx.update.callback_query.message.message_id,
         null,
         "Canceled sending message"
+      );
+    },
+  },
+  {
+    regex: new RegExp(`^${INLINE_KEYBOARD_COMMAND.SET_LANGUAGE} (.+)$`),
+    handler: (ctx, callbackData: string, regexMatch: string[]) => {
+      const [language] = regexMatch;
+      ctx.chat_data.language = language;
+      ctx.telegram.editMessageText(
+        ctx.update.callback_query.message.chat.id,
+        ctx.update.callback_query.message.message_id,
+        null,
+        i18n.successfully_set_language(language),
+        languagesForChatAsReplyMarkup(language)
       );
     },
   },

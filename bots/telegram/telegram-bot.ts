@@ -6,11 +6,8 @@ import * as inlineKeyboard from "./inline-keyboard";
 import { adminCommandHandlers } from "./admin-commands";
 import { getChatIdsThatSubscribedOneOfChannelIds } from "./chat-data-persistence";
 import channels = require("../../bot-manager/utils/channels");
+import { i18n } from "./i18n";
 
-const HELP_TEXT = `Hello, this Telegram Bot will send notifications to different channels. You can subscribe the channels relevant for you by listing all channels with /channels and then select the ones you want. Click again to unsubscribe.
-To view only a list of channels you subscribed to, use /mychannels.
-
-You may want to subscribe the General channel. Use /channels to get started.`;
 
 class TelegramBot {
   private bot: any;
@@ -29,15 +26,22 @@ class TelegramBot {
     });
     this.bot.command("/mychannels", async (ctx) => {
       if (!ctx.chat_data.channelIds || ctx.chat_data.channelIds.length === 0) {
-        ctx.reply("You don't have any subscribed channels yet. List all /channels and add one.");
+        ctx.reply(i18n.you_dont_have_any_subscribed_channels_yet(ctx.chat_data.language));
       } else {
         ctx.reply(
-          "Your Channels:",
+          i18n.your_channels(ctx.chat_data.language),
           inlineKeyboard.channelsForChatAsReplyMarkup(ctx.chat_data.channelIds, {
             onlySubscribedChannels: true,
           })
         );
       }
+    });
+
+    this.bot.command("/language", async (ctx) => {
+      ctx.reply(
+        i18n.languages(ctx.chat_data.language),
+        inlineKeyboard.languagesForChatAsReplyMarkup(ctx.chat_data.language)
+      );
     });
 
     this.bot.telegram.setMyCommands([
@@ -108,7 +112,7 @@ class TelegramBot {
   }
 
   private async sendHelp(ctx) {
-    await ctx.replyWithMarkdown(HELP_TEXT);
+    await ctx.replyWithMarkdown(i18n.HELP_TEXT(ctx.chat_data.language));
     if (ctx.is_admin && this.HELP_TEXT_ADMIN) {
       ctx.replyWithMarkdown(this.HELP_TEXT_ADMIN);
     }
