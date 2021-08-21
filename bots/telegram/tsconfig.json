@@ -1,0 +1,7 @@
+{
+    "compilerOptions": {
+        "allowJs": true,
+        "lib": ["ES2020"],
+        "resolveJsonModule" : true
+    }
+}
