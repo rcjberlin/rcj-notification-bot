@@ -1,0 +1,73 @@
+html, body {
+    margin: 0;
+    font-family: Verdana, sans-serif;
+    line-height: 1.5;
+}
+
+.template {
+    display: none;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 0 !important;
+}
+
+#tabbar {
+    overflow: hidden;
+    width: 100%;
+    background: #000;
+    color: #fff;
+}
+
+.tabbar-item {
+    padding: 8px 16px;
+    float: left;
+    width: auto;
+    border: none;
+    display: block;
+    outline: 0;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    background-color: inherit;
+    text-align: center;
+    cursor: pointer;
+}
+
+button::-moz-focus-inner,
+input[type="reset"]::-moz-focus-inner,
+input[type="button"]::-moz-focus-inner,
+input[type="submit"]::-moz-focus-inner {
+    border: none;
+}
+
+.tabbar-item:hover {
+    background: #333;
+}
+
+.tabbar-item.active {
+    background: #555;
+}
+
+.box {
+    margin: 10px;
+    display: none;
+    overflow-x: auto;
+}
+
+.box.active {
+    display: block;
+}
+
+.heading {
+    margin: 0;
+}
+
+table {
+    border-collapse: collapse;
+}
+
+tr, td {
+    padding: 0.1em 0.5em;
+    border: 1px solid #ccc;
+    white-space: nowrap;
+}

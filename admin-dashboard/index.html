@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard - Notification Bot - RCJ Berlin</title>
+
+    <link rel="stylesheet" href="./style.css" />
+    <script src="sync-input-values.js" type="text/javascript" defer></script>
+    <script src="bot-manager-api.js" type="text/javascript" defer></script>
+    <script src="main.js" type="text/javascript" defer></script>
+  </head>
+
+  <body>
+    <div id="tabbar">
+      <button
+        id="template-tab"
+        type="button"
+        class="template tabbar-item"
+      ></button>
+    </div>
+
+    <div id="box-wrapper">
+      <div data-tab-title="Channels" class="box">
+        <table>
+          <tr>
+            <td>Channel</td>
+            <td>#Subscribers</td>
+          </tr>
+          <tr>
+            <td><a href="?channel=1">General</a></td>
+            <td>9</td>
+          </tr>
+          <tr>
+            <td>Rescue Line</td>
+            <td>5</td>
+          </tr>
+          <tr>
+            <td>Rescue Line Entry</td>
+            <td>4</td>
+          </tr>
+          <tr>
+            <td>Team ABC</td>
+            <td>2</td>
+          </tr>
+          <tr>
+            <td>Team DEF</td>
+            <td>3</td>
+          </tr>
+          <tr>
+            <td>Team GHI</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>Team JKL</td>
+            <td>0</td>
+          </tr>
+          <tr>
+            <td>Team MNO</td>
+            <td>3</td>
+          </tr>
+          <tr>
+            <td>Team XYZ</td>
+            <td>1</td>
+          </tr>
+        </table>
+        <div id="channel-detail" style="margin-top: 1em">
+          Channel: ---
+          <br />
+          Send message:<br />
+          <textarea></textarea>
+          <br />
+          <button>Send</button>
+          <br />
+          Messages sent:
+          <br />
+          <table>
+            <tr>
+              <td>Channel</td>
+              <td>Timestamp</td>
+              <td>Recipients</td>
+              <td>Message</td>
+            </tr>
+          </table>
+        </div>
+      </div>
+      <div data-tab-title="Messages" class="box">
+        <table>
+          <tr>
+            <td>Channel</td>
+            <td>Timestamp</td>
+            <td>Recipients</td>
+            <td>Message</td>
+          </tr>
+          <tr>
+            <td>Team ABC</td>
+            <td>2022-04-01 09:01</td>
+            <td>1</td>
+            <td>
+              Euer Lauf startet in Kürze. Das vorige Team hat den Lauf soeben
+              begonnen.
+            </td>
+          </tr>
+          <tr>
+            <td>Team JKL</td>
+            <td>2022-04-01 09:00</td>
+            <td>0</td>
+            <td>
+              Euer Lauf startet in Kürze. Das vorige Team hat den Lauf soeben
+              begonnen.
+            </td>
+          </tr>
+          <tr>
+            <td>General</td>
+            <td>2022-04-01 08:30</td>
+            <td>4</td>
+            <td>Herzlich Willkommen!</td>
+          </tr>
+        </table>
+      </div>
+      <div data-tab-title="Received Messages" class="box">
+        <table>
+          <tr>
+            <td>Messenger</td>
+            <td>Timestamp</td>
+            <td>Sender</td>
+            <td>Message</td>
+          </tr>
+          <tr>
+            <td>Signal</td>
+            <td>2022-04-01 13:37</td>
+            <td>+49 1234 5678 9012</td>
+            <td>
+              Bei unserem 3. Lauf werden nur 420 Punkte angezeigt, aber wir
+              müssten eigentlich 69 mehr haben.
+            </td>
+          </tr>
+          <tr>
+            <td>Matrix</td>
+            <td>2022-04-01 08:00</td>
+            <td>emmett.brown@matrix.org</td>
+            <td>Es war ein wunderbarer Wettbewerb. Vielen Dank!</td>
+          </tr>
+        </table>
+      </div>
+      <div data-tab-title="Stats" class="box">
+        <table>
+          <tr>
+            <td>Messenger</td>
+            <td>#Users</td>
+          </tr>
+          <tr>
+            <td>Signal</td>
+            <td>7</td>
+          </tr>
+          <tr>
+            <td>Matrix</td>
+            <td>2</td>
+          </tr>
+        </table>
+      </div>
+      <div data-tab-title="Setup" class="box">
+        <p>rcj-notification-bot</p>
+        <label for="input-bot-manager-endpoint">Endpoint</label>
+        <input type="text" id="input-bot-manager-endpoint" />
+        <label for="input-bot-manager-token">Token</label>
+        <input type="password" id="input-bot-manager-token" />
+      </div>
+    </div>
+  </body>
+</html>

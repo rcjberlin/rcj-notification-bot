@@ -1,5 +1,5 @@
 const config = require("./utils/config");
-
+const path = require("path");
 const express = require("express");
 const app = express();
 const bodyParser = require("body-parser");
@@ -12,6 +12,8 @@ const INTERNAL_PORT = config.botmanager.INTERNAL_PORT;
 const EXTERNAL_PORT = config.botmanager.EXTERNAL_PORT;
 
 const EXTERNAL_ACCEPTED_TOKENS = config.botmanager.TOKENS;
+
+app.use('/admin-dashboard', express.static(path.join(__dirname, '../admin-dashboard')));
 
 const TOKEN_TYPE = "Bearer";
 app.use((req, res, next) => {
