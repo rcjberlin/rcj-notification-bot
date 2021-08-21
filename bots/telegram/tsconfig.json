@@ -1,7 +1,9 @@
 {
     "compilerOptions": {
+        "outDir": "./dist",
         "allowJs": true,
         "lib": ["ES2020"],
         "resolveJsonModule" : true
-    }
+    },
+    "exclude": ["./dist/**/*"]
 }
