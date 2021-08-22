@@ -12,6 +12,19 @@ async function writeFile(filepath, content) {
   });
 }
 
+async function readFile(filepath) {
+  return new Promise(async function (resolve, reject) {
+    fs.readFile(filepath, "utf8", function (err, data) {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(data);
+      }
+    });
+  });
+}
+
 module.exports = {
   writeFile,
+  readFile,
 };

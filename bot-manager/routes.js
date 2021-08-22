@@ -5,6 +5,7 @@ const express = require("express");
 const router = express.Router();
 
 const request = require("./utils/request");
+const messageHistory = require("./message-history");
 
 router.get("/", (req, res) => {
   res.json({
@@ -25,24 +26,28 @@ router.post("/v1/send", async (req, res) => {
   );
 
   let users = 0;
+  const messageLog = { message: req.body.message, channelIds: req.body.channelIds, bots: {} };
   for (let i = 0; i < Object.keys(config.bots).length; i++) {
     if (responses[i].status !== 200) {
       // TODO: retry later, bot is probably only down for some time
       // TODO: alert admins (via bots?)
+      messageLog.bots[Object.keys(config.bots)[i]] = { successful: false };
       continue;
     }
     try {
-      users += responses[i].json.data.users;
+      const usersCurrentBot = responses[i].json.data.users;
+      users += usersCurrentBot;
+      messageLog.bots[Object.keys(config.bots)[i]] = { successful: true, users: usersCurrentBot };
     } catch {
       // TODO
     }
   }
+  messageLog["users"] = users;
+  messageHistory.writeLog(messageLog);
 
   res.json({
     successful: true,
-    data: {
-      users,
-    },
+    data: messageLog,
   });
 });
 
@@ -74,6 +79,13 @@ router.get("/v1/users", async (req, res) => {
   res.json({
     successful: true,
     data: responseData,
+  });
+});
+
+router.get("/v1/messages", (req, res) => {
+ res.json({
+    successful: true,
+    data: messageHistory.getAllLogs(),
   });
 });
 

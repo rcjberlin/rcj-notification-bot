@@ -69,9 +69,9 @@ function writeTabIdToLocalStorage(tabId) {
   localStorage.setItem(LS_TAB_ID, tabId);
 }
 
-function convertDateToString(unixTimestampInSeconds) {
-  let date = new Date(unixTimestampInSeconds * 1000);
-  return "hh:mm:ss (DD.MM.YYYY)"
+function convertDateToString(unixTimestampInSeconds, formatString="YYYY-MM-DD hh:mm:ss") {
+  const date = new Date(unixTimestampInSeconds * 1000);
+  return formatString
     .replace("hh", pad(date.getHours()))
     .replace("mm", pad(date.getMinutes()))
     .replace("ss", pad(date.getSeconds()))

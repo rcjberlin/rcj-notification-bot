@@ -3,6 +3,7 @@ const LS_INPUTS_SYNC = "notification-bot-admin-dashboard-synced-inputs";
 const inputsToSync = [
   "input-bot-manager-endpoint",
   "input-bot-manager-token",
+  "channel-detail-send-message-input",
 ];
 let inputValuesFromLocalStorage = {};
 

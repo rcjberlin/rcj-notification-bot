@@ -33,15 +33,15 @@
           Channel: <span id="channel-detail-name">---</span>
           <br />
           Send message:<br />
-          <textarea></textarea>
+          <textarea id="channel-detail-send-message-input"></textarea>
           <br />
-          <button>Send</button>
+          <button id="channel-detail-btn-send-message">Send</button>
           <br />
           Messages sent:
           <br />
           <table id="channel-detail-sent-messages">
             <tr>
-              <td>Channel</td>
+              <td>Channels</td>
               <td>Timestamp</td>
               <td>Recipients</td>
               <td>Message</td>
@@ -50,36 +50,12 @@
         </div>
       </div>
       <div data-tab-title="Messages" class="box">
-        <table>
+        <table id="messages-table">
           <tr>
-            <td>Channel</td>
+            <td>Channels</td>
             <td>Timestamp</td>
             <td>Recipients</td>
             <td>Message</td>
-          </tr>
-          <tr>
-            <td>Team ABC</td>
-            <td>2022-04-01 09:01</td>
-            <td>1</td>
-            <td>
-              Euer Lauf startet in Kürze. Das vorige Team hat den Lauf soeben
-              begonnen.
-            </td>
-          </tr>
-          <tr>
-            <td>Team JKL</td>
-            <td>2022-04-01 09:00</td>
-            <td>0</td>
-            <td>
-              Euer Lauf startet in Kürze. Das vorige Team hat den Lauf soeben
-              begonnen.
-            </td>
-          </tr>
-          <tr>
-            <td>General</td>
-            <td>2022-04-01 08:30</td>
-            <td>4</td>
-            <td>Herzlich Willkommen!</td>
           </tr>
         </table>
       </div>

@@ -69,7 +69,19 @@ Response (200):
 {
     "successful": true,
     "data": {
-        "users": 0, // number of users the message has been sent to
+        "users": 1, // number of users the message has been sent to
+        "timestamp": "2022-04-01T13:37:42.069Z",
+        "message": "<message>",
+        "channelIds": [13, 37],
+        "bots": {
+            "telegram": {
+                "successful": true,
+                "users": 1
+            },
+            "matrix": {
+                "successful": false
+            }
+        }
     },
 }
 ```
@@ -94,6 +106,35 @@ Response (200):
         },
         "<bot-name>": {}
     }
+}
+```
+
+## GET /v1/messages
+
+Returns all messages that have been sent.
+
+Response (200):
+
+```jsonc
+{
+    "successful": true,
+    "data": [
+        {
+            "timestamp": "2022-04-01T13:37:42.069Z",
+            "message": "<message>",
+            "channelIds": [13, 37],
+            "users": 1,
+            "bots": {
+                "telegram": {
+                    "successful": true,
+                    "users": 1
+                },
+                "matrix": {
+                    "successful": false
+                }
+            }
+        }
+    ]
 }
 ```
 
