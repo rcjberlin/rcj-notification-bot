@@ -1,8 +1,9 @@
 const request = require("./utils/request");
 const fileHelper = require("./utils/file-helper");
+const path = require("path");
 
 const scheduleUrlAllTeams = "http://localhost:5000/schedule/json/teams.json";
-const filenameChannels = "./channels.json";
+const filenameChannels = path.join(__dirname, "../channels.json");
 
 const channels = [
   {
@@ -31,7 +32,7 @@ async function main() {
   for (const team of teams) {
     channels.push({
       id: channelId++,
-      channel: team.name,
+      channel: `${team.teamId}: ${team.name}`,
       teamId: team.teamId,
     });
   }
