@@ -220,14 +220,20 @@ Response (200):
 
 ## POST /v1/event
 
-Send a an event to the Notification Manager, e.g. a run started/finished.
+Send an event to the Notification Manager, e.g. a run started/finished.
 
 Request Body:
 
-```json
+```jsonc
 {
-    "event": "run-started",
-    "teamId": "RL 1",
+    "event": "run-started", // "run-finished"
+    "run": {
+        "teamId": "RL 1",
+        // "teamname": "RL 1",
+        "competition": "2022-berlin-line",
+        "round": 1,
+        "arenaId": "D"
+    }
 }
 ```
 
